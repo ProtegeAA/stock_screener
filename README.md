@@ -44,6 +44,27 @@ python screener.py --aristocrats
 python screener.py --kings
 ```
 
+### Custom Watchlists
+
+Create and manage your own custom stock lists:
+
+```bash
+# Create a watchlist file (one ticker per line)
+cat > my_stocks.txt << EOF
+# My favorite dividend stocks
+JNJ
+PG
+KO
+MSFT
+EOF
+
+# Screen stocks from a watchlist
+python screener.py --watchlist my_stocks.txt
+
+# Save tickers to a watchlist for later use
+python screener.py JNJ PG KO --save-watchlist healthcare.txt
+```
+
 ### Customize Screening Criteria
 
 ```bash
@@ -134,6 +155,8 @@ Expected Return:      6.7%
 | `tickers` | Stock ticker symbols to analyze |
 | `--aristocrats` | Screen dividend aristocrats list |
 | `--kings` | Screen dividend kings list |
+| `--watchlist FILE` | Load tickers from a watchlist file |
+| `--save-watchlist FILE` | Save tickers to a watchlist file |
 | `--min-yield` | Minimum dividend yield % (default: 1.5) |
 | `--max-pe` | Maximum P/E ratio (default: 25) |
 | `--min-roic` | Minimum ROIC % (default: 12) |
