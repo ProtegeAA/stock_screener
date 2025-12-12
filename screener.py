@@ -284,6 +284,55 @@ def format_value(value, suffix='', decimal=1):
     return f"{value:.{decimal}f}{suffix}"
 
 
+def get_numeric_input(prompt: str, input_type=float, default=None, min_val=None, max_val=None):
+    """
+    Safely get numeric input from user with validation.
+
+    Args:
+        prompt: The prompt to display to the user
+        input_type: The type to convert to (int or float)
+        default: Default value if user presses Enter (None means required input)
+        min_val: Minimum allowed value (inclusive)
+        max_val: Maximum allowed value (inclusive)
+
+    Returns:
+        The validated numeric value or None if default is allowed and user pressed Enter
+    """
+    while True:
+        try:
+            user_input = input(prompt).strip()
+
+            # If empty and default is allowed, return None
+            if not user_input and default is not None:
+                return None
+
+            # If empty but no default, require input
+            if not user_input:
+                print("Error: Please enter a value.")
+                continue
+
+            # Convert to the requested type
+            value = input_type(user_input)
+
+            # Validate range if specified
+            if min_val is not None and value < min_val:
+                print(f"Error: Value must be at least {min_val}")
+                continue
+
+            if max_val is not None and value > max_val:
+                print(f"Error: Value must be at most {max_val}")
+                continue
+
+            return value
+
+        except ValueError:
+            type_name = "integer" if input_type == int else "number"
+            print(f"Error: Please enter a valid {type_name}.")
+        except KeyboardInterrupt:
+            print("\n\nOperation cancelled by user.")
+            sys.exit(0)
+
+
 def print_analysis(analysis: StockAnalysis, verbose: bool = True):
     """Print formatted analysis results."""
 
@@ -507,14 +556,17 @@ def interactive_mode():
                 print(f"  {i}. {wl}")
             print(f"  {len(watchlists) + 1}. Enter custom filename")
 
-            wl_choice = input(f"\nChoose a file (1-{len(watchlists) + 1}): ").strip()
-            try:
-                wl_idx = int(wl_choice) - 1
-                if 0 <= wl_idx < len(watchlists):
-                    filename = watchlists[wl_idx]
-                else:
-                    filename = input("Enter watchlist filename: ").strip()
-            except ValueError:
+            wl_choice = get_numeric_input(
+                f"\nChoose a file (1-{len(watchlists) + 1}): ",
+                input_type=int,
+                default=None,
+                min_val=1,
+                max_val=len(watchlists) + 1
+            )
+            wl_idx = wl_choice - 1
+            if 0 <= wl_idx < len(watchlists):
+                filename = watchlists[wl_idx]
+            else:
                 filename = input("Enter watchlist filename: ").strip()
         else:
             filename = input("Enter watchlist filename: ").strip()
@@ -538,17 +590,34 @@ def interactive_mode():
     if customize == 'y':
         print("\nPress Enter to keep default values:")
 
-        min_yield = input(f"Minimum dividend yield % (default={criteria.min_dividend_yield}): ").strip()
-        if min_yield:
-            criteria.min_dividend_yield = float(min_yield)
+        min_yield = get_numeric_input(
+            f"Minimum dividend yield % (default={criteria.min_dividend_yield}): ",
+            input_type=float,
+            default=criteria.min_dividend_yield,
+            min_val=0,
+            max_val=100
+        )
+        if min_yield is not None:
+            criteria.min_dividend_yield = min_yield
 
-        max_pe = input(f"Maximum P/E ratio (default={criteria.max_pe_ratio}): ").strip()
-        if max_pe:
-            criteria.max_pe_ratio = float(max_pe)
+        max_pe = get_numeric_input(
+            f"Maximum P/E ratio (default={criteria.max_pe_ratio}): ",
+            input_type=float,
+            default=criteria.max_pe_ratio,
+            min_val=0
+        )
+        if max_pe is not None:
+            criteria.max_pe_ratio = max_pe
 
-        min_roic = input(f"Minimum ROIC % (default={criteria.min_roic}): ").strip()
-        if min_roic:
-            criteria.min_roic = float(min_roic)
+        min_roic = get_numeric_input(
+            f"Minimum ROIC % (default={criteria.min_roic}): ",
+            input_type=float,
+            default=criteria.min_roic,
+            min_val=-100,
+            max_val=1000
+        )
+        if min_roic is not None:
+            criteria.min_roic = min_roic
 
     # Step 3: Output options
     print("\n" + "-"*60)
