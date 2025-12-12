@@ -102,8 +102,10 @@ def get_stock_data(ticker: str) -> Optional[StockAnalysis]:
         )
 
         # Dividend metrics
-        # yfinance returns dividendYield as percentage already (2.52 = 2.52%)
+        # yfinance returns dividendYield as decimal (0.0252 = 2.52%), convert to percentage
         analysis.dividend_yield = info.get('dividendYield')
+        if analysis.dividend_yield:
+            analysis.dividend_yield *= 100  # Convert to percentage
 
         analysis.payout_ratio = info.get('payoutRatio')
         if analysis.payout_ratio:
@@ -115,8 +117,9 @@ def get_stock_data(ticker: str) -> Optional[StockAnalysis]:
             if len(dividends) > 0:
                 # Get annual dividend totals
                 annual_divs = dividends.resample('YE').sum()
-                if len(annual_divs) >= 5:
-                    oldest = annual_divs.iloc[-5]
+                # Need 6 data points for 5 years of growth (e.g., 2019-2024 = 5 years)
+                if len(annual_divs) >= 6:
+                    oldest = annual_divs.iloc[-6]
                     newest = annual_divs.iloc[-1]
                     if oldest > 0:
                         analysis.dividend_growth_5yr = ((newest / oldest) ** 0.2 - 1) * 100
@@ -235,7 +238,7 @@ def screen_stock(analysis: StockAnalysis, criteria: ScreeningCriteria) -> StockA
             score += 2
 
     # --- Debt-to-Equity Check ---
-    if analysis.debt_to_equity:
+    if analysis.debt_to_equity is not None:
         if not high_leverage_sector and analysis.debt_to_equity > criteria.max_debt_to_equity:
             flags.append(f"High debt/equity: {analysis.debt_to_equity:.2f}")
         elif analysis.debt_to_equity < 0.5:
