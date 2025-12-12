@@ -450,6 +450,166 @@ def save_watchlist(tickers: list, filename: str):
         sys.exit(1)
 
 
+def interactive_mode():
+    """Interactive mode for non-technical users."""
+    import os
+
+    print("\n" + "="*60)
+    print("Welcome to the Blue-Chip Dividend Stock Screener!")
+    print("="*60)
+    print("\nThis tool helps you evaluate dividend stocks based on")
+    print("quality metrics like dividend growth, balance sheet strength,")
+    print("profitability, and valuation.")
+
+    # Step 1: Choose what to screen
+    print("\n" + "-"*60)
+    print("STEP 1: Choose what to screen")
+    print("-"*60)
+    print("\n1. Enter custom stock tickers")
+    print("2. Screen Dividend Aristocrats (25+ years of dividend growth)")
+    print("3. Screen Dividend Kings (50+ years of dividend growth)")
+    print("4. Load from a watchlist file")
+    print("5. Exit")
+
+    while True:
+        choice = input("\nEnter your choice (1-5): ").strip()
+        if choice in ['1', '2', '3', '4', '5']:
+            break
+        print("Invalid choice. Please enter 1, 2, 3, 4, or 5.")
+
+    if choice == '5':
+        print("Goodbye!")
+        sys.exit(0)
+
+    tickers = []
+    if choice == '1':
+        print("\nEnter stock tickers separated by spaces (e.g., JNJ PG KO MSFT):")
+        ticker_input = input("Tickers: ").strip().upper()
+        if not ticker_input:
+            print("No tickers entered. Exiting.")
+            sys.exit(0)
+        tickers = ticker_input.split()
+    elif choice == '2':
+        tickers = DIVIDEND_ARISTOCRATS
+        print(f"\nScreening {len(tickers)} Dividend Aristocrats")
+    elif choice == '3':
+        tickers = DIVIDEND_KINGS
+        print(f"\nScreening {len(tickers)} Dividend Kings")
+    elif choice == '4':
+        # List available watchlist files
+        watchlists = [f for f in os.listdir('.') if f.endswith('.txt')]
+        if watchlists:
+            print("\nAvailable watchlist files:")
+            for i, wl in enumerate(watchlists, 1):
+                print(f"  {i}. {wl}")
+            print(f"  {len(watchlists) + 1}. Enter custom filename")
+
+            wl_choice = input(f"\nChoose a file (1-{len(watchlists) + 1}): ").strip()
+            try:
+                wl_idx = int(wl_choice) - 1
+                if 0 <= wl_idx < len(watchlists):
+                    filename = watchlists[wl_idx]
+                else:
+                    filename = input("Enter watchlist filename: ").strip()
+            except ValueError:
+                filename = input("Enter watchlist filename: ").strip()
+        else:
+            filename = input("Enter watchlist filename: ").strip()
+
+        if not filename:
+            print("No filename entered. Exiting.")
+            sys.exit(0)
+
+        tickers = load_watchlist(filename)
+
+    # Step 2: Customize criteria (optional)
+    print("\n" + "-"*60)
+    print("STEP 2: Screening criteria (optional)")
+    print("-"*60)
+    print("\nWould you like to customize the screening criteria?")
+    print("Default criteria follow Lyn Alden's investment principles.")
+
+    customize = input("Customize? (y/n, default=n): ").strip().lower()
+
+    criteria = ScreeningCriteria()
+    if customize == 'y':
+        print("\nPress Enter to keep default values:")
+
+        min_yield = input(f"Minimum dividend yield % (default={criteria.min_dividend_yield}): ").strip()
+        if min_yield:
+            criteria.min_dividend_yield = float(min_yield)
+
+        max_pe = input(f"Maximum P/E ratio (default={criteria.max_pe_ratio}): ").strip()
+        if max_pe:
+            criteria.max_pe_ratio = float(max_pe)
+
+        min_roic = input(f"Minimum ROIC % (default={criteria.min_roic}): ").strip()
+        if min_roic:
+            criteria.min_roic = float(min_roic)
+
+    # Step 3: Output options
+    print("\n" + "-"*60)
+    print("STEP 3: Output options")
+    print("-"*60)
+
+    verbose = True
+    show_verbose = input("\nShow detailed analysis? (y/n, default=y): ").strip().lower()
+    if show_verbose == 'n':
+        verbose = False
+
+    export_file = None
+    do_export = input("Export results to CSV? (y/n, default=n): ").strip().lower()
+    if do_export == 'y':
+        export_file = input("Enter filename (e.g., results.csv): ").strip()
+        if not export_file:
+            export_file = "screener_results.csv"
+
+    save_wl = None
+    do_save = input("Save these tickers to a watchlist? (y/n, default=n): ").strip().lower()
+    if do_save == 'y':
+        save_wl = input("Enter watchlist filename (e.g., my_stocks.txt): ").strip()
+        if not save_wl:
+            save_wl = "watchlist.txt"
+
+    # Run the screener
+    print("\n" + "="*60)
+    print("Starting analysis...")
+    print("="*60)
+
+    print(f"\nScreening Criteria:")
+    print(f"  Min Dividend Yield: {criteria.min_dividend_yield}%")
+    print(f"  Max P/E Ratio: {criteria.max_pe_ratio}")
+    print(f"  Min ROIC: {criteria.min_roic}%")
+    print(f"  Max Payout Ratio: {criteria.max_payout_ratio}%")
+    print(f"  Min Interest Coverage: {criteria.min_interest_coverage}x")
+    print()
+
+    results = screen_stocks(tickers, criteria, verbose=verbose)
+
+    # Print summary
+    if not results.empty:
+        print("\n" + "="*60)
+        print("SUMMARY - Sorted by Score")
+        print("="*60)
+
+        summary_cols = ['Ticker', 'Score', 'Pass', 'Div Yield', 'P/E', 'Expected Return']
+        print(results[summary_cols].to_string(index=False))
+
+        passing = results[results['Pass'] == True]
+        print(f"\n{len(passing)} of {len(results)} stocks passed the screen")
+
+        if export_file:
+            results.to_csv(export_file, index=False)
+            print(f"\nResults exported to {export_file}")
+
+    if save_wl:
+        save_watchlist(tickers, save_wl)
+
+    print("\n" + "="*60)
+    print("Screening complete!")
+    print("="*60)
+
+
 if __name__ == '__main__':
     import argparse
 
@@ -512,6 +672,11 @@ if __name__ == '__main__':
 
     args = parser.parse_args()
 
+    # If no arguments provided, launch interactive mode
+    if not any([args.tickers, args.aristocrats, args.kings, args.watchlist]):
+        interactive_mode()
+        sys.exit(0)
+
     # Determine which tickers to screen
     tickers = []
     if args.watchlist:
@@ -525,14 +690,6 @@ if __name__ == '__main__':
     elif args.aristocrats:
         tickers = DIVIDEND_ARISTOCRATS
         print("Screening Dividend Aristocrats (25+ years of consecutive dividend increases)")
-    else:
-        print("Usage: python screener.py TICKER [TICKER ...]")
-        print("       python screener.py --aristocrats")
-        print("       python screener.py --kings")
-        print("       python screener.py --watchlist FILE")
-        print("\nExample: python screener.py JNJ PG KO MSFT AAPL")
-        print("         python screener.py --watchlist my_stocks.txt")
-        sys.exit(0)
 
     # Set up criteria
     criteria = ScreeningCriteria(

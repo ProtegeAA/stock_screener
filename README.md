@@ -28,6 +28,35 @@ pip install -r requirements.txt
 
 ## Usage
 
+### Easy Launch (Recommended for Non-Technical Users)
+
+Simply run the launcher script for your operating system:
+
+**On Mac/Linux:**
+```bash
+./screen.sh
+```
+
+**On Windows:**
+```
+Double-click screen.bat
+```
+
+This will start an interactive mode that guides you through the entire process with simple prompts. No command-line knowledge required!
+
+### Interactive Mode
+
+Run without any arguments to enter interactive mode:
+
+```bash
+python screener.py
+```
+
+You'll be guided through:
+1. Choosing what to screen (custom tickers, Aristocrats, Kings, or watchlist)
+2. Optionally customizing screening criteria
+3. Selecting output options (detailed/brief, CSV export, save watchlist)
+
 ### Screen Specific Stocks
 
 ```bash
