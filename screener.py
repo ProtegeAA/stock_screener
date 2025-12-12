@@ -400,6 +400,56 @@ DIVIDEND_KINGS = [
 ]
 
 
+def load_watchlist(filename: str) -> list:
+    """Load tickers from a watchlist file.
+
+    File format: One ticker per line. Lines starting with # are treated as comments.
+    Blank lines are ignored.
+
+    Example:
+        # My favorite dividend stocks
+        JNJ
+        PG
+        KO
+
+        # Tech stocks
+        MSFT
+        AAPL
+    """
+    tickers = []
+    try:
+        with open(filename, 'r') as f:
+            for line in f:
+                line = line.strip()
+                # Skip comments and blank lines
+                if line and not line.startswith('#'):
+                    # Take only the first word (ticker) in case there are inline comments
+                    ticker = line.split()[0].upper()
+                    tickers.append(ticker)
+        print(f"Loaded {len(tickers)} tickers from {filename}")
+        return tickers
+    except FileNotFoundError:
+        print(f"Error: Watchlist file '{filename}' not found")
+        sys.exit(1)
+    except Exception as e:
+        print(f"Error reading watchlist file: {e}")
+        sys.exit(1)
+
+
+def save_watchlist(tickers: list, filename: str):
+    """Save tickers to a watchlist file."""
+    try:
+        with open(filename, 'w') as f:
+            f.write("# Stock Watchlist\n")
+            f.write(f"# Generated on {pd.Timestamp.now().strftime('%Y-%m-%d %H:%M:%S')}\n\n")
+            for ticker in tickers:
+                f.write(f"{ticker}\n")
+        print(f"Saved {len(tickers)} tickers to {filename}")
+    except Exception as e:
+        print(f"Error saving watchlist: {e}")
+        sys.exit(1)
+
+
 if __name__ == '__main__':
     import argparse
 
@@ -449,12 +499,25 @@ if __name__ == '__main__':
         type=str,
         help='Export results to CSV file'
     )
+    parser.add_argument(
+        '--watchlist',
+        type=str,
+        help='Load tickers from a watchlist file'
+    )
+    parser.add_argument(
+        '--save-watchlist',
+        type=str,
+        help='Save tickers to a watchlist file'
+    )
 
     args = parser.parse_args()
 
     # Determine which tickers to screen
     tickers = []
-    if args.tickers:
+    if args.watchlist:
+        tickers = load_watchlist(args.watchlist)
+        print(f"Screening tickers from watchlist: {args.watchlist}")
+    elif args.tickers:
         tickers = [t.upper() for t in args.tickers]
     elif args.kings:
         tickers = DIVIDEND_KINGS
@@ -466,7 +529,9 @@ if __name__ == '__main__':
         print("Usage: python screener.py TICKER [TICKER ...]")
         print("       python screener.py --aristocrats")
         print("       python screener.py --kings")
+        print("       python screener.py --watchlist FILE")
         print("\nExample: python screener.py JNJ PG KO MSFT AAPL")
+        print("         python screener.py --watchlist my_stocks.txt")
         sys.exit(0)
 
     # Set up criteria
@@ -502,3 +567,7 @@ if __name__ == '__main__':
         if args.export:
             results.to_csv(args.export, index=False)
             print(f"\nResults exported to {args.export}")
+
+    # Save watchlist if requested
+    if args.save_watchlist:
+        save_watchlist(tickers, args.save_watchlist)
