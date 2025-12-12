@@ -102,10 +102,8 @@ def get_stock_data(ticker: str) -> Optional[StockAnalysis]:
         )
 
         # Dividend metrics
-        # yfinance returns dividendYield as decimal (0.0252 = 2.52%), convert to percentage
+        # yfinance returns dividendYield as a percentage value (2.5 = 2.5%)
         analysis.dividend_yield = info.get('dividendYield')
-        if analysis.dividend_yield:
-            analysis.dividend_yield *= 100  # Convert to percentage
 
         analysis.payout_ratio = info.get('payoutRatio')
         if analysis.payout_ratio:
