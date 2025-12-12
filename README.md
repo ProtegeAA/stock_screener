@@ -42,6 +42,12 @@ Simply run the launcher script for your operating system:
 Double-click screen.bat
 ```
 
+**What it does:**
+- Automatically creates a virtual environment (on first run)
+- Installs all required dependencies
+- Launches the interactive screener
+- No manual setup required!
+
 This will start an interactive mode that guides you through the entire process with simple prompts. No command-line knowledge required!
 
 ### Interactive Mode
