@@ -13,6 +13,24 @@ This screener analyzes stocks across multiple dimensions to identify quality div
 
 ## Installation
 
+### Quick Start (Automatic)
+
+The easiest way is to use the launcher scripts which handle everything:
+
+```bash
+# Clone the repository
+git clone https://github.com/yourusername/stock_screener.git
+cd stock_screener
+
+# Run the launcher (installs everything automatically)
+./run.sh          # Mac/Linux
+run.bat           # Windows (double-click or run from terminal)
+```
+
+### Manual Installation (Optional)
+
+If you prefer to set up manually:
+
 ```bash
 # Clone the repository
 git clone https://github.com/yourusername/stock_screener.git
@@ -30,19 +48,25 @@ pip install -r requirements.txt
 
 ### Easy Launch (Recommended for Non-Technical Users)
 
-Simply run the launcher script for your operating system:
+Simply run the launcher script for your operating system. **It automatically installs everything you need!**
 
 **On Mac/Linux:**
 ```bash
-./screen.sh
+./run.sh
 ```
 
 **On Windows:**
 ```
-Double-click screen.bat
+Double-click run.bat
 ```
 
-This will start an interactive mode that guides you through the entire process with simple prompts. No command-line knowledge required!
+The script will:
+- ✓ Check for Python installation
+- ✓ Create a virtual environment (if needed)
+- ✓ Install all required dependencies automatically
+- ✓ Launch the interactive screener
+
+**No manual setup required - just run and go!**
 
 ### Interactive Mode
 
